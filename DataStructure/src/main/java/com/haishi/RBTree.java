@@ -23,7 +23,7 @@ public class RBTree<K extends Comparable<K>,V>{
     /**
      * 红黑树结点
      */
-    static class RBNode<K extends Comparable<K>,V> {
+    public static class RBNode<K extends Comparable<K>,V> {
         private RBNode parent;
         private RBNode left;
         private RBNode right;
@@ -88,13 +88,14 @@ public class RBTree<K extends Comparable<K>,V>{
             this.key = key;
         }
 
-        public boolean isColor() {
+        public boolean getColor() {
             return color;
         }
 
         public void setColor(boolean color) {
             this.color = color;
         }
+
     }
 
 
@@ -178,10 +179,11 @@ public class RBTree<K extends Comparable<K>,V>{
      * @param val
      * @return 弹出的值
      */
-    public V add(K key ,V val){
+    public V put(K key ,V val){
         //1.找到插入的位置
         if(this.root==null){
             this.root=new RBNode(key,val==null?key:val,BLACK);
+            size++;
             return null;
         }
 
@@ -218,17 +220,112 @@ public class RBTree<K extends Comparable<K>,V>{
             p.right=cur;
         }
 
+
         //2.调整平衡 变色和旋转
         fixAfterPut(cur);
+        size++;
         return null;
     }
 
     /**
      * 调整结点平衡
-     * @param cur
+     * @param node
      */
-    private void fixAfterPut(RBNode<K,Object> cur) {
-        
+    private void fixAfterPut(RBNode<K,Object> node) {
+        //1.插入结点设置为红色
+        node.setColor(RED);
+
+        //2.旋转和变色
+        RBNode parent;
+        while (node!=null&&node!=root&&node.parent.color==RED){
+            parent=getParent(node);
+            if(parent==leftOf(getParent(parent))){
+                //当前结点的父节点是爷结点的左结点
+                RBNode uncle=rightOf(getParent(parent));
+                if(getColor(uncle)==RED){
+                    //四结点
+                    setColor(uncle,BLACK);
+                    setColor(parent,BLACK);
+                    setColor(getParent(parent),RED);
+                    //需要一个递归的处理
+                    node=getParent(getParent(node));
+                }else{
+                    //三结点
+                    if(node==rightOf(parent)){
+                        //做一次左旋
+                        node=parent;
+                        leftRotate(node);
+                    }
+                    //根据爷爷结点做一次右旋
+                    setColor(getParent(node),BLACK);
+                    setColor(getParent(getParent(node)),RED);
+                    RightRotate(getParent(getParent(node)));
+                }
+
+            }else{
+                //当前结点的父节点是爷结点的右结点
+                RBNode uncle=leftOf(getParent(parent));
+                if(getColor(uncle)==RED){
+                    //四结点
+                    setColor(uncle,BLACK);
+                    setColor(parent,BLACK);
+                    setColor(getParent(parent),RED);
+                    //需要一个递归的处理
+                    node=getParent(getParent(node));
+                }else{
+                    //三结点
+                    if(node==parent.left){
+                        //做一次右旋
+                        node=parent;
+                        RightRotate(node);
+                    }
+                    //根据爷爷结点做一次右旋
+                    setColor(getParent(node),BLACK);
+                    setColor(getParent(getParent(node)),RED);
+                    leftRotate(getParent(getParent(node)));
+                }
+
+            }
+        }
+
+        //3.根节点为黑色
+        root.setColor(BLACK);
+    }
+
+    private boolean getColor(RBNode n){
+        return n==null?BLACK:n.color;
+    }
+
+    private RBNode getParent(RBNode n){
+        return n==null?null:n.parent;
+    }
+
+    private RBNode leftOf(RBNode n){
+        return n==null?null:n.left;
+    }
+
+    private RBNode rightOf(RBNode n){
+        return n==null?null:n.right;
+    }
+
+    private void setColor(RBNode n, boolean color){
+        if(n!=null)
+            n.setColor(color);
+    }
+
+
+    public RBNode getRoot() {
+        return root;
+    }
+
+    public int size(){
+        return size;
+    }
+
+
+
+    public V remove(K key){
+
     }
 
 
