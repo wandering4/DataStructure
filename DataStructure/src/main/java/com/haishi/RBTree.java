@@ -323,12 +323,154 @@ public class RBTree<K extends Comparable<K>,V>{
     }
 
 
-
+    /**
+     * 删除节点
+     *   节点删除(普通的二叉树删除)
+     */
     public V remove(K key){
+        //1.找到对应结点
+        RBNode p=getNode(key);
 
+        if(p==null){
+            return null;
+        }
+
+        V oldVal=(V) p.getValue();
+        deleteNode(p);
+        return oldVal;
     }
 
 
+    private RBNode getNode(K key){
+        RBNode p=root;
+        while(p!=null){
+            if(p.key.equals(key)){
+                return p;
+            }else if(key.compareTo((K)p.key)<0){
+                p=p.left;
+            }else{
+                p=p.right;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 删除节点
+     * 1.删除节点(普通的二叉树删除)
+     *    1.删除叶子节点 直接删除
+     *    2.删除节点有一个子节点，那么用子节点来替代
+     *    3.删除节点右两个子节点，这时我们需要找到删除节点的前驱节点或者后继节点来替换
+     *          将情况3转换为情况1或2
+     * 2.调整
+     * @param node
+     */
+    private void deleteNode(RBNode node){
+        //1.删除的结点有两个子节点
+        while (leftOf(node)!=null&&rightOf(node)!=null){
+            //找到node的前驱结点或后继结点
+            RBNode predecessor=predecessor(node);
+//            RBNode successor=successor(node);
+            //通过前驱或后继结点的信息覆盖
+            node.setKey(predecessor.key);
+            node.setValue(predecessor.value);
+            node=predecessor;
+        }
+
+        RBNode replace=leftOf(node)!=null?leftOf(node):rightOf(node);
+        //2.删除的结点有一个子结点
+        if(replace!=null){
+            node.setKey(replace.key);
+            node.setValue(replace.value);
+            if(node.color==BLACK){
+                // 做调整操作
+                fixAfterRemove(replace);
+            }
+            node = null;
+        }
+        //2.删除的结点是叶子结点
+        else if (node == root) {
+            root = null;
+
+        } else {
+
+            if (getColor(node) == BLACK) {
+                // 做调整操作
+                fixAfterRemove(replace);
+            }
+
+            RBNode parent=getParent(node);
+            if(node==parent.left){
+                parent.left=null;
+            }else{
+                parent.right=null;
+            }
+            node.parent=null;
+            node=null;
+        }
+    }
+
+    /**
+     * 删除结点后的平衡处理
+     * @param e
+     */
+    private void fixAfterRemove(RBNode e) {
+
+    }
+
+    /**
+     * 查询当前结点的前驱结点
+     * @param node
+     * @return
+     */
+    private RBNode predecessor(RBNode node) {
+        RBNode p;
+        if (node == null) {
+            return null;
+        } else if (leftOf(node) != null) {
+            p = leftOf(node);
+            while (p.right != null) {
+                p = p.right;
+            }
+            return p;
+        } else {
+            p = getParent(node);
+            RBNode pre = node;
+            while (p != null && pre == p.left) {
+                pre = p;
+                p = getParent(p);
+            }
+            return p;
+        }
+    }
+
+    /**
+     * 目标结点的后继结点
+     * @param node
+     * @return
+     */
+    private RBNode successor(RBNode node) {
+        RBNode p;
+        if (node == null) {
+            return null;
+        } else if (rightOf(node) != null) {
+            p = rightOf(node);
+            while (p.left != null) {
+                p = p.left;
+            }
+            return p;
+        } else {
+            p = getParent(node);
+            RBNode pre = node;
+            while (p != null && pre == p.right) {
+                pre = p;
+                p = getParent(p);
+            }
+            return p;
+        }
+    }
+
 }
+
 
 
