@@ -38,7 +38,7 @@ public class RBTreeTest {
     /**
      * 删除操作
      */
-/*    public static void deleteOpt(){
+    public static void deleteOpt(){
         RBTree<String,Object> rbt=new RBTree<>();
         //测试1：预先造10个节点（1-10）
         String keyA=null;
@@ -70,6 +70,7 @@ public class RBTreeTest {
         while (true){
             System.out.println("请输入你要删除的节点:");
             String key=scanner.next();
+
             System.out.println();
             //这里代码最多支持3位数，3位以上的话红黑树显示太错位了，这里就不重构代码了,大家可自行重构
             if(key.length()==1){
@@ -81,5 +82,5 @@ public class RBTreeTest {
             rbt.remove(key);
             TreeOperation.show(rbt.getRoot());
         }
-    }*/
+    }
 }

@@ -1,8 +1,7 @@
 package com.haishi;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * 红黑树
@@ -203,7 +202,7 @@ public class RBTree<K extends Comparable<K>,V>{
                 V old= (V) cur.getValue();
                 cur.setValue(val==null?key:val);
                 return old;
-            }else if(i<0){
+            }else if(i>0){
                 cur=cur.left;
             }else{
                 cur=cur.right;
@@ -212,7 +211,7 @@ public class RBTree<K extends Comparable<K>,V>{
         //找到了需要插入的位置
         cur=new RBNode<K,Object>(key,val==null?key:val,BLACK);
         cur.parent=p;
-        if(i<0){
+        if(i>0){
             //插入左侧
             p.left=cur;
         }else{
@@ -380,13 +379,20 @@ public class RBTree<K extends Comparable<K>,V>{
         RBNode replace=leftOf(node)!=null?leftOf(node):rightOf(node);
         //2.删除的结点有一个子结点
         if(replace!=null){
-            node.setKey(replace.key);
-            node.setValue(replace.value);
-            if(node.color==BLACK){
+            replace.parent = node.parent;
+            if(node.parent == null){
+                root = replace;
+            }else if(leftOf(getParent(node)) == node){
+                getParent(node).left = replace;
+            }else{
+                getParent(node).right = replace;
+            }
+            // 要删除的node节点 GC
+            node.left = node.right = node.parent = null;
+            if(getColor(node) == BLACK){
                 // 做调整操作
                 fixAfterRemove(replace);
             }
-            node = null;
         }
         //2.删除的结点是叶子结点
         else if (node == root) {
@@ -396,7 +402,7 @@ public class RBTree<K extends Comparable<K>,V>{
 
             if (getColor(node) == BLACK) {
                 // 做调整操作
-                fixAfterRemove(replace);
+                fixAfterRemove(node);
             }
 
             RBNode parent=getParent(node);
@@ -412,11 +418,87 @@ public class RBTree<K extends Comparable<K>,V>{
 
     /**
      * 删除结点后的平衡处理
+     * 1. 情况1：自己能搞定
+     * 2. 情况2： 找兄弟结点借    父结点下移，兄弟结点上移  变色+旋转
+     * 3. 情况3： 兄弟结点不借    兄弟结点变红  递归处理
      * @param e
      */
     private void fixAfterRemove(RBNode e) {
+        //处理情况2，3
+        while (e!=root&&getColor(e)==BLACK){
+            if(e==leftOf(getParent(e))){
+                RBNode brother=getParent(e).right;
+                //不是真正的兄弟结点
+                if(getColor(brother)==RED){
+                    setColor(brother,BLACK);
+                    setColor(getParent(e),RED);
+                    leftRotate(getParent(e));
+                    //找到真正兄弟结点
+                    brother=rightOf(getParent(e));
+                }
+                //情况3：兄弟结点没有子节点
+                if(getColor(leftOf(brother))==BLACK&&getColor(rightOf(brother))==BLACK){
+                    //变色
+                    setColor(brother,RED);
+                    e=getParent(e);
+                }else {
+                    //兄弟结点借
+                    //兄弟结点右侧为空，左侧肯定不为空
+                    if (getColor(rightOf(brother)) == BLACK) {
+                        setColor(brother, RED);
+                        setColor(leftOf(brother), BLACK);
+                        RightRotate(brother);
+                        //兄弟结点变化
+                        brother = rightOf(getParent(e));
+                    }
+                    //左旋加变色
+                    setColor(brother, getColor(getParent(e)));
+                    setColor(getParent(e), BLACK);
+                    setColor(rightOf(brother), BLACK);
+                    leftRotate(getParent(e));
+                    //结束循环
+                    e=root;
+                }
+            }else{
+                RBNode brother=getParent(e).left;
+                //不是真正的兄弟结点
+                if(getColor(brother)==RED){
+                    setColor(brother,BLACK);
+                    setColor(getParent(e),RED);
+                    RightRotate(getParent(e));
+                    //找到真正兄弟结点
+                    brother=leftOf(getParent(e));
+                }
+                //情况3：兄弟结点没有子节点
+                if(getColor(leftOf(brother))==BLACK&&getColor(rightOf(brother))==BLACK){
+                    //变色
+                    setColor(brother,RED);
+                    e=getParent(e);
+                }else {
+                    //兄弟结点借
+                    //兄弟结点右侧为空，左侧肯定不为空
+                    if (getColor(leftOf(brother)) == BLACK) {
+                        setColor(brother, RED);
+                        setColor(leftOf(brother), BLACK);
+                        leftRotate(brother);
+                        //兄弟结点变化
+                        brother = leftOf(getParent(e));
+                    }
+                    //左旋加变色
+                    setColor(brother, getColor(getParent(e)));
+                    setColor(getParent(e), BLACK);
+                    setColor(leftOf(brother), BLACK);
+                    RightRotate(getParent(e));
+                    //结束循环
+                    e=root;
+                }
+            }
 
+        }
+        //处理情况1
+        setColor(e,BLACK);
     }
+
 
     /**
      * 查询当前结点的前驱结点
@@ -471,6 +553,5 @@ public class RBTree<K extends Comparable<K>,V>{
     }
 
 }
-
 
 
